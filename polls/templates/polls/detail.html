@@ -10,3 +10,10 @@
 {% endfor %}
 <input type="submit" value="Vote">
 </form>
+
+{% if user.is_authenticated %}
+  <form action="{% url 'polls:logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+  </form>
+{% endif %}

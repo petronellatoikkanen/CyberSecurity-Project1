@@ -4,6 +4,9 @@ from django.urls import reverse
 from django.views import generic
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.db import connection
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
 from .models import Choice, Question
 
@@ -13,7 +16,6 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_question_list'
 
     def get_queryset(self):
-        """Return the last ten published questions."""
         return Question.objects.order_by('-pub_date')[:10]
 
 
@@ -26,7 +28,14 @@ class ResultsView(generic.DetailView):
     model = Question
     template_name = 'polls/results.html'
 
+################################# FLAW 1 - - - SQL Injection #################################
+#
+#def vote(request, question_id):
+#    choice_id = request.POST['choice']
+#    with connection.cursor() as cursor:
+#        cursor.execute(f"UPDATE polls_choice SET votes = votes + 1 WHERE id = {choice_id}")
 
+#Fix
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
     try:
@@ -41,7 +50,27 @@ def vote(request, question_id):
         selected_choice.save()
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
         
+################################# FAULT 2 - - - Broken Authentication ##########################
+#
+#def login_view(request):
+#    if request.method == 'POST':
+#        username = request.POST['username']
+#        password = request.POST['password']
+#        
+#        try:
+#            user = User.objects.get(username=username)
+#            if user.password == password:
+#                request.session['user_id'] = user.id
+#                return redirect('polls:index')
+#        except User.DoesNotExist:
+#            pass  # No user found
+#
+#        return render(request, 'polls/login.html', {
+#            'error_message': "Invalid login",
+#        })
+#    return render(request, 'polls/login.html')
 
+# Fix
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -53,6 +82,13 @@ def login_view(request):
         form = AuthenticationForm()
     return render(request, 'polls/login.html', {'form': form})
 
+################################# FAULT 4 Broken Access Control ################################
+#def logout_view(request):
+#    logout(request)
+#    return redirect('polls:index')  
+
+# Fix
+@login_required
 def logout_view(request):
     logout(request)
     return redirect('polls:index')  
