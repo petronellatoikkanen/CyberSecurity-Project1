@@ -34,7 +34,7 @@ ALLOWED_HOSTS = []
 # DEBUG = False
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-################### FAULT 3 Sensitive Data Exposure ############################
+################### FAULT 3 Sensitive Data Exposure ############################ PART 1
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False

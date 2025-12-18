@@ -7,6 +7,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.db import connection
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 
 from .models import Choice, Question
 
@@ -52,8 +53,10 @@ def vote(request, question_id):
 #        selected_choice.save()
 #        return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
         
-################################# FAULT 2 - - - Broken Authentication ##########################
-#
+################################# FAULT 2 - - - Broken Authentication ########################## AND
+################### FAULT 3 Sensitive Data Exposure ############################ PART 2
+
+##
 def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -85,22 +88,32 @@ def login_view(request):
 #    return render(request, 'polls/login.html', {'form': form})
 
 ################################# FAULT 4 Broken Access Control ################################
-def logout_view(request):
-    logout(request)
-    return redirect('polls:index')  
+
+def profile_view(request, user_id):
+    user = User.objects.get(id=user_id)
+    return render(request, "polls/profile.html", {"user": user})
 
 # Fix
 #@login_required
-#def logout_view(request):
-#    logout(request)
-#    return redirect('polls:index')  
+#def profile_view(request, user_id):
+#    user = get_object_or_404(User, id=user_id)
+
+#    if request.user != user:
+#        return HttpResponseForbidden("Access denied")
+
+#    return render(request, "polls/profile.html", {"user": user})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('polls:index')
 
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect("polls:login") 
+            return redirect("polls:login")
     else:
         form = UserCreationForm()
     return render(request, "polls/register.html", {"form": form})
